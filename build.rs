@@ -1,4 +1,4 @@
-extern crate bindgen;
+use bindgen;
 use cmake;
 use std::env;
 
@@ -13,14 +13,15 @@ fn main() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     let dst = cmake::Config::new("external/vowpal_wabbit")
-        .define("STATIC_LINK_VW_JAVA", "On")
+        .define("STATIC_LINK_VW", "On")
+        .define("BUILD_SHARED_LIBS", "On")
         .define("VW_INSTALL", "Off")
         .define("BUILD_TESTS", "Off")
         .define("GIT_SUBMODULE", "Off")
         .define("CMAKE_ARCHIVE_OUTPUT_DIRECTORY", out_path.join("lib"))
         .define("CMAKE_LIBRARY_OUTPUT_DIRECTORY", out_path.join("lib"))
         .define("CMAKE_RUNTIME_OUTPUT_DIRECTORY", out_path.join("bin"))
-        .build_target("vw_c_wrapper")
+        .build_target("vw_c_api")
         .cxxflag(exception_handling_flag)
         .build();
     println!(
@@ -47,7 +48,7 @@ fn main() {
         "cargo:rustc-link-search=native={}",
         dst.join("lib/Release").display()
     );
-    println!("cargo:rustc-link-lib=vw_c_wrapper");
+    println!("cargo:rustc-link-lib=vw_c_api");
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")

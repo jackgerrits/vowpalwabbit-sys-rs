@@ -4,44 +4,33 @@
 
 //! Rust bindings for the [VowpalWabbit](https://github.com/VowpalWabbit/vowpal_wabbit) C-binding surface.
 //!
-//! ### Example
-//! The following is an example for a basic usecase similar to command line driver mode. VW is initialized, an example run through the parser then prediction pipeline. Finally the example and VW object are finished.
-//! ```
-//! use std::ffi::CString;
+//! Experimental bindings using the new C binding layer.
 //!
-//! unsafe {
-//!   let command_line_str = CString::new("--quiet").unwrap();
-//!   let vw_handle = vowpalwabbit_sys::VW_InitializeA(command_line_str.as_ptr());
-//!   let example_str =
-//!     CString::new("1 | test example=1").unwrap();
-//!   let example_handle = vowpalwabbit_sys::VW_ReadExampleA(vw_handle, example_str.as_ptr());
-//!
-//!   vowpalwabbit_sys::VW_Predict(vw_handle, example_handle);
-//!   vowpalwabbit_sys::VW_Learn(vw_handle, example_handle);
-//!   vowpalwabbit_sys::VW_FinishExample(vw_handle, example_handle);
-//!   vowpalwabbit_sys::VW_Finish(vw_handle);
-//! }
-//! ```
+
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::ffi::CString;
+    use std::mem;
 
     #[test]
     fn test_initialize_and_parse_learn_example() {
         unsafe {
-            let command_line_str = CString::new("--quiet").unwrap();
-            let vw_handle = VW_InitializeA(command_line_str.as_ptr());
-            let example_str = CString::new("1 | test example=1").unwrap();
-            let example_handle = VW_ReadExampleA(vw_handle, example_str.as_ptr());
-            assert_eq!(VW_GetLabel(example_handle), 1.0);
+            let errString = VWCreateErrorString();
+            let mut options = mem::MaybeUninit::uninit();
+            let result = VWCreateOptions(options.as_mut_ptr(), errString);
+            assert_eq!(result, VW_SUCCESS);
 
-            VW_Predict(vw_handle, example_handle);
-            VW_Learn(vw_handle, example_handle);
-            VW_FinishExample(vw_handle, example_handle);
-            VW_Finish(vw_handle);
+            let options = options.assume_init();
+            let command_line_str = CString::new("--quiet").unwrap();
+            let result = VWOptionsSetBool(options, command_line_str.as_ptr(), true, errString);
+            assert_eq!(result, VW_SUCCESS);
+
+            let result = VWDestroyOptions(options, errString);
+            assert_eq!(result, VW_SUCCESS);
+            VWDestroyErrorString(errString);
         }
     }
 }
