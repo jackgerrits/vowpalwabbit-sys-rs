@@ -18,19 +18,19 @@ mod tests {
     #[test]
     fn test_initialize_and_parse_learn_example() {
         unsafe {
-            let errString = VWCreateErrorString();
+            let errString = vw_create_error_string();
             let mut options = mem::MaybeUninit::uninit();
-            let result = VWCreateOptions(options.as_mut_ptr(), errString);
+            let result = vw_create_options(options.as_mut_ptr(), errString);
             assert_eq!(result, VW_SUCCESS);
 
             let options = options.assume_init();
             let command_line_str = CString::new("--quiet").unwrap();
-            let result = VWOptionsSetBool(options, command_line_str.as_ptr(), true, errString);
+            let result = vw_options_set_bool(options, command_line_str.as_ptr(), true, errString);
             assert_eq!(result, VW_SUCCESS);
 
-            let result = VWDestroyOptions(options, errString);
+            let result = vw_destroy_options(options, errString);
             assert_eq!(result, VW_SUCCESS);
-            VWDestroyErrorString(errString);
+            vw_destroy_error_string(errString);
         }
     }
 }
