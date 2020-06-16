@@ -13,6 +13,8 @@ fn main() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     let dst = cmake::Config::new("external/vowpal_wabbit")
+        // This flag is used as it forces dependencies to be statically linked but still produces a dynamic lib
+        .define("STATIC_LINK_VW_JAVA", "On")
         .define("BUILD_SHARED_LIBS", "On")
         .define("VW_INSTALL", "Off")
         .define("BUILD_TESTS", "Off")
