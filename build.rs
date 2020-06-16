@@ -13,7 +13,6 @@ fn main() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     let dst = cmake::Config::new("external/vowpal_wabbit")
-        .define("STATIC_LINK_VW", "On")
         .define("BUILD_SHARED_LIBS", "On")
         .define("VW_INSTALL", "Off")
         .define("BUILD_TESTS", "Off")
