@@ -1,8 +1,8 @@
 use bindgen;
 use cmake;
 use std::env;
-
 use std::path::PathBuf;
+
 fn main() {
     // For some reason on Windows I had to force exception handling to be turned on.
     let exception_handling_flag = if cfg!(target_os = "windows") {
@@ -13,8 +13,9 @@ fn main() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     let dst = cmake::Config::new("external/vowpal_wabbit")
-        // This flag is used as it forces dependencies to be statically linked but still produces a dynamic lib
+        // This flag is used as it forces dependencies to be statically linked but still produces a dynamic lib.
         .define("STATIC_LINK_VW_JAVA", "On")
+        // Produce the target as a shared lib.
         .define("BUILD_SHARED_LIBS", "On")
         .define("VW_INSTALL", "Off")
         .define("BUILD_TESTS", "Off")
@@ -25,6 +26,7 @@ fn main() {
         .build_target("vw_c_api")
         .cxxflag(exception_handling_flag)
         .build();
+
     println!(
         "cargo:rustc-link-search=native={}",
         dst.join("bin").display()
@@ -49,7 +51,9 @@ fn main() {
         "cargo:rustc-link-search=native={}",
         dst.join("lib/Release").display()
     );
-    println!("cargo:rustc-link-lib=vw_c_api");
+
+    // Only support consuming as a shared object.
+    println!("cargo:rustc-link-lib=dylib=vw_c_api");
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
