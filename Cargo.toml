@@ -40,3 +40,4 @@ exclude = [
 [build-dependencies]
 bindgen = "0.54.0"
 cmake = "0.1.44"
+num_cpus = "1.13.0"

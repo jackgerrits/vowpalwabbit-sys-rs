@@ -1,7 +1,16 @@
 use bindgen;
 use cmake;
+use num_cpus;
+use std::borrow::Borrow;
 use std::env;
 use std::path::PathBuf;
+
+fn envvar_is_set<T: Borrow<str>>(s: T) -> bool {
+    match env::var(s.borrow()) {
+        Ok(_) => true,
+        _ => false,
+    }
+}
 
 fn main() {
     // For some reason on Windows I had to force exception handling to be turned on.
@@ -11,6 +20,12 @@ fn main() {
         ""
     };
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+
+    // The CMake lib uses an environment var to set parallelization, if it's already set by
+    // an external user then respect the value, otherwise use all cores.
+    if !envvar_is_set("NUM_JOBS") {
+        env::set_var("NUM_JOBS", num_cpus::get().to_string());
+    }
 
     let dst = cmake::Config::new("external/vowpal_wabbit")
         // This flag is used as it forces dependencies to be statically linked but still produces a dynamic lib.
@@ -55,8 +70,14 @@ fn main() {
     // Only support consuming as a shared object.
     println!("cargo:rustc-link-lib=dylib=vw_c_api");
 
+    // There are some headers copied to the binary directory as part of the build so
+    // we must add it to the include path.
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
+        .clang_arg(format!(
+            "-I{}",
+            out_path.join("build/bindings/c/include/").display()
+        ))
         .generate()
         .unwrap();
 
